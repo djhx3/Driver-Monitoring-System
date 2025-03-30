@@ -1,0 +1,13 @@
+ultralytics
+opencv-python
+roboflow
+torch
+torchvision
+numpy
+matplotlib
+pillow
+supervision
+transformers
+fastapi
+uvicorn
+huggingface_hub
