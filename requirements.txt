@@ -11,3 +11,4 @@ transformers
 fastapi
 uvicorn
 huggingface_hub
+dlib

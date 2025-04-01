@@ -20,7 +20,7 @@ MODEL_PATH = "best.pt"
 # Upload model to Hugging Face
 api.upload_file(
     path_or_fileobj=MODEL_PATH,
-    path_in_repo="/training/best.pt",
+    path_in_repo="/training/Datasets/dataset_smoke/runs/detect/train/weights/best.pt",
     repo_id=REPO_ID,
     repo_type="model",
     token=HF_TOKEN

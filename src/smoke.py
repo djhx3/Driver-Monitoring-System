@@ -6,6 +6,7 @@ from supervision import Detections
 from PIL import Image
 import numpy as np
 import torch
+import sys
 import cv2
 import time
 model_path = hf_hub_download(repo_id="arnabdhar/YOLOv8-Face-Detection", filename="model.pt")

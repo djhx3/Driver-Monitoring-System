@@ -1,9 +1,11 @@
 import cv2
+import sys
 import numpy as np
 import dlib
 import time
 from scipy.spatial import distance as dist
 from imutils import face_utils
+
 def cal_yawn(shape):
 	top_lip = shape[50:53]
 	top_lip = np.concatenate((top_lip, shape[61:64]))
@@ -14,8 +16,25 @@ def cal_yawn(shape):
 	top_mean = np.mean(top_lip, axis=0)
 	low_mean = np.mean(low_lip, axis=0)
 
-	distance = dist.euclidean(top_mean,low_mean)
-	return distance
+	distance = dist.euclidean(top_mean, low_mean)
+
+	# Calculate face height as a reference for relative measurement
+	face_height = dist.euclidean(shape[8], shape[27])  # Chin to nose bridge
+	relative_distance = distance / face_height  # Normalize by face height
+
+	return relative_distance
+# def cal_yawn(shape):
+# 	top_lip = shape[50:53]
+# 	top_lip = np.concatenate((top_lip, shape[61:64]))
+
+# 	low_lip = shape[56:59]
+# 	low_lip = np.concatenate((low_lip, shape[65:68]))
+
+# 	top_mean = np.mean(top_lip, axis=0)
+# 	low_mean = np.mean(low_lip, axis=0)
+
+# 	distance = dist.euclidean(top_mean,low_mean)
+# 	return distance
 
 cam = cv2.VideoCapture(0)
 
@@ -25,7 +44,7 @@ face_model = dlib.get_frontal_face_detector()
 landmark_model = dlib.shape_predictor(r'../training/Datasets/shape_predictor_68_face_landmarks.dat')
 
 #--------Variables-------#
-yawn_thresh = 40
+yawn_thresh = 0.22
 ptime = 0
 while True :
 	suc,frame = cam.read()
