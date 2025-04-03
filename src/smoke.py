@@ -11,7 +11,7 @@ import cv2
 import time
 model_path = hf_hub_download(repo_id="arnabdhar/YOLOv8-Face-Detection", filename="model.pt")
 model_face = YOLO(model_path)
-model_smoke = YOLO(r'../training/Datasets/dataset_smoke/runs/detect/train/weights/best.pt')
+model_smoke = YOLO(r'../weights/smoke/best.pt')
 def enhance_image(frame):
     # Convert to HSV (Hue, Saturation, Value)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)

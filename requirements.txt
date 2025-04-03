@@ -12,3 +12,6 @@ fastapi
 uvicorn
 huggingface_hub
 dlib
+imutils
+flask
+scipy
