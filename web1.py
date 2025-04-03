@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, send_from_directory
 import cv2
 import torch
 from ultralytics import YOLO
@@ -8,13 +8,14 @@ from imutils import face_utils
 from scipy.spatial import distance as dist
 import time
 from shapely.geometry import Point, Polygon
+import os
 
 app = Flask(__name__)
 
 # Load models
-model_smoke = YOLO("./weights/smoke/best.pt")
+model_smoke = YOLO("/weights/smoke/best.pt")
 face_detector = dlib.get_frontal_face_detector()
-landmark_predictor = dlib.shape_predictor("./weights/face/shape_predictor_68_face_landmarks.dat")
+landmark_predictor = dlib.shape_predictor("/weights/face/shape_predictor_68_face_landmarks.dat")
 
 # Virtual fence setup
 fence_points = np.array([[275, 220], [350, 220], [400, 450], [200, 450]], np.int32)
@@ -109,6 +110,10 @@ def stop_aisle_detection():
     global detection_aisle_active
     detection_aisle_active = False
     return jsonify({"status": "Aisle detection stopped"})
+
+@app.route('/static/')
+def send_static(path):
+    return send_from_directory('static', path)
 
 if __name__ == '__main__':
     app.run(debug=True)
