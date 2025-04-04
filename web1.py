@@ -70,24 +70,32 @@ def detect_yawning(frame):
 def detect_smoking(frame):
     global smoking_alert_active, smoking_detection_count, smoking_alert_start_time
     if not detection_active:
-        return False
+        return False, []
+
     smoke_results = model_smoke(frame)
-    detected = len(smoke_results[0].boxes) > 0
-    
-    if detected:
+    smoke_boxes = []
+
+    for box in smoke_results[0].boxes:
+        conf = float(box.conf[0])
+        if conf >= 0.3:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            smoke_boxes.append({
+                "x1": x1, "y1": y1, "x2": x2, "y2": y2,
+                "confidence": conf
+            })
+    if len(smoke_boxes) > 0:
         smoking_detection_count += 1
     else:
-        smoking_detection_count = 0  # Reset count if no detection
-    
+        smoking_detection_count = 0  # Reset count if nothing passes the threshold
     if smoking_detection_count >= 3:
         smoking_alert_active = True
         smoking_alert_start_time = time.time()
-        smoking_detection_count = 0  # Reset count
-    
+        smoking_detection_count = 0
     if smoking_alert_active and time.time() - smoking_alert_start_time >= 5:
-        smoking_alert_active = False  # Reset alert state
-    
-    return smoking_alert_active
+        smoking_alert_active = False
+
+    return smoking_alert_active, smoke_boxes
+
 
 def detect_mobile(frame):
     global mobile_alert_active, mobile_detection_count, mobile_alert_start_time
@@ -162,16 +170,23 @@ def gen_frames():
         yawning = detect_yawning(frame)
         frame=detect_aisle(frame)
         if(frame_count % frame_skip == 0):
-            smoking = detect_smoking(frame)
+            smoking, smoke_boxes = detect_smoking(frame)
             mobile_detected, bounding_boxes = detect_mobile(frame)
-            for pred in bounding_boxes:
-                x, y, w, h = int(pred["x"] - pred["width"] / 2), int(pred["y"] - pred["height"] / 2), int(pred["width"]), int(pred["height"])
-                label = pred["class"]
-                confidence = pred["confidence"]
-                # Draw bounding box
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, f"{label} ({confidence:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
+
+        for pred in bounding_boxes:
+            x, y, w, h = int(pred["x"] - pred["width"] / 2), int(pred["y"] - pred["height"] / 2), int(pred["width"]), int(pred["height"])
+            label = pred["class"]
+            confidence = pred["confidence"]
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(frame, f"{label} ({confidence:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        for box in smoke_boxes:
+            x1, y1, x2, y2 = box["x1"], box["y1"], box["x2"], box["y2"]
+            label = "Cigarette"
+            confidence = box["confidence"]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (128, 0, 128), 2)
+            cv2.putText(frame, f"{label} ({confidence:.2f})", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (128, 0, 128), 2)
+
         if smoking_alert_active:
             cv2.putText(frame, "Smoking Detected!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
         if yawning:
