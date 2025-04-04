@@ -34,18 +34,22 @@ class TestSmokingDetection(unittest.TestCase):
     def test_smoking_detected(self):
         self.assertTrue(self.detect_smoking("test_images/smk1.jpg"))
         self.assertTrue(self.detect_smoking("test_images/smk2.jpg"))
-        # self.assertTrue(self.detect_smoking("test_images/smk3.jpg"))
-        # self.assertTrue(self.detect_smoking("test_images/smk4.jpg"))
-        # self.assertTrue(self.detect_smoking("test_images/smk5.jpg"))
-        self.assertTrue(self.detect_smoking("test_images/smk10.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk3.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk4.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk5.jpg"))
         self.assertTrue(self.detect_smoking("test_images/smk6.jpg"))
-        #self.assertTrue(self.detect_smoking("test_images/smk7.jpg"))
-        # self.assertTrue(self.detect_smoking("test_images/smk8.jpg"))
-        # self.assertTrue(self.detect_smoking("test_images/smk9.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk7.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk8.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk9.jpg"))
+        self.assertTrue(self.detect_smoking("test_images/smk10.jpg"))
         
 
-    # def test_no_smoking_detected(self):
-    #     self.assertFalse(self.detect_smoking("test_images/nsmk1.jpg"))
+    def test_no_smoking_detected(self):
+        self.assertFalse(self.detect_smoking("test_images/nsmk1.jpg"))
+        self.assertFalse(self.detect_smoking("test_images/nsmk2.jpg"))
+        self.assertFalse(self.detect_smoking("test_images/nsmk3.jpg"))
+        self.assertFalse(self.detect_smoking("test_images/nsmk4.jpg"))
+        self.assertFalse(self.detect_smoking("test_images/nsmk5.jpg"))
 
 if __name__ == "__main__":
     unittest.main()
