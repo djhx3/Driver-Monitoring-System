@@ -12,7 +12,7 @@ fastapi
 uvicorn
 huggingface_hub
 # dlib
-dlib-19.22.99-cp39-cp39-win_amd64.whl
+# dlib-19.22.99-cp39-cp39-win_amd64.whl
 imutils
 flask
 scipy
