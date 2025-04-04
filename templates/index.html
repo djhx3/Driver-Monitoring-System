@@ -7,49 +7,43 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-
-    <h1>Driver Monitoring System</h1>
     <div class="container">
+        <h1>Driver Monitoring System</h1>
         <div class="video-container">
-            <img id="videoStream" src="/video_feed" alt="Video Feed">
+            <img id="videoStream" src="{{ url_for('video_feed') }}" alt="Video Feed">
         </div>
         <div class="buttons">
-            <button onclick="startDriverMonitoring()">Start Driver Monitoring</button>
-            <button class="stop-btn" onclick="stopDriverMonitoring()">Stop Driver Monitoring</button>
-            <button onclick="startAisleDetection()">Start Aisle Detection</button>
-            <button class="stop-btn" onclick="stopAisleDetection()">Stop Aisle Detection</button>
+            <button class="start-btn" onclick="startDetection()">Start Detection</button>
+            <button class="stop-btn" onclick="stopDetection()">Stop Detection</button>
+            <button class="start-aisle" onclick="startAisleDetection()">Start Aisle Detection</button>
+            <button class="stop-aisle" onclick="stopAisleDetection()">Stop Aisle Detection</button>
         </div>
     </div>
-
+    
     <script>
-        function startDriverMonitoring() {
+        function startDetection() {
             fetch('/start_driver_monitoring', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => alert(data.status))
-                .catch(error => alert('Error: ' + error));
+                .then(data => alert(data.status));
         }
 
-        function stopDriverMonitoring() {
+        function stopDetection() {
             fetch('/stop_driver_monitoring', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => alert(data.status))
-                .catch(error => alert('Error: ' + error));
+                .then(data => alert(data.status));
         }
-
+        
         function startAisleDetection() {
             fetch('/start_aisle_detection', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => alert(data.status))
-                .catch(error => alert('Error: ' + error));
+                .then(data => alert(data.status));
         }
 
         function stopAisleDetection() {
             fetch('/stop_aisle_detection', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => alert(data.status))
-                .catch(error => alert('Error: ' + error));
+                .then(data => alert(data.status));
         }
     </script>
-
 </body>
 </html>

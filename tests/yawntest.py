@@ -10,7 +10,7 @@ class TestYawnDetection(unittest.TestCase):
     def setUpClass(cls):
         # Load face detector and landmark predictor
         cls.face_model = dlib.get_frontal_face_detector()
-        cls.landmark_model = dlib.shape_predictor(r'../training/Datasets/shape_predictor_68_face_landmarks.dat')
+        cls.landmark_model = dlib.shape_predictor(r'../weights/face/shape_predictor_68_face_landmarks.dat')
         cls.yawn_thresh = 0.22
 
     def cal_yawn(self, shape):

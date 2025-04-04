@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, jsonify, send_from_directory
+from flask import Flask, render_template, Response, jsonify
 import cv2
 import torch
 from ultralytics import YOLO
@@ -9,13 +9,21 @@ from scipy.spatial import distance as dist
 import time
 from shapely.geometry import Point, Polygon
 import os
+from inference_sdk import InferenceHTTPClient
 
 app = Flask(__name__)
 
 # Load models
-model_smoke = YOLO("/weights/smoke/best.pt")
+model_smoke = YOLO("./weights/smoke/best.pt")
 face_detector = dlib.get_frontal_face_detector()
-landmark_predictor = dlib.shape_predictor("/weights/face/shape_predictor_68_face_landmarks.dat")
+landmark_predictor = dlib.shape_predictor("./weights/face/shape_predictor_68_face_landmarks.dat")
+model_aisle = YOLO("./weights/aisle/best.pt")
+
+# Initialize the Roboflow Inference Client
+CLIENT = InferenceHTTPClient(
+    api_url="https://detect.roboflow.com",
+    api_key="CHcYSeOwlZM0P7MrY1XE"
+)
 
 # Virtual fence setup
 fence_points = np.array([[275, 220], [350, 220], [400, 450], [200, 450]], np.int32)
@@ -32,9 +40,20 @@ def cal_yawn(shape):
 
 # Detection state variables
 detection_active = False
-detection_aisle_active = False
+detection_aisle = False
+mobile_alert_active = False
+mobile_detection_count = 0
+mobile_alert_start_time = 0
+
+smoking_alert_active = False
+smoking_detection_count = 0
+smoking_alert_start_time = 0
+frame_skip = 4
+frame_count = 0
 
 def detect_yawning(frame):
+    if not detection_active:
+        return False
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = face_detector(gray)
     yawning = False
@@ -49,33 +68,121 @@ def detect_yawning(frame):
     return yawning
 
 def detect_smoking(frame):
+    global smoking_alert_active, smoking_detection_count, smoking_alert_start_time
     if not detection_active:
         return False
     smoke_results = model_smoke(frame)
-    return len(smoke_results[0].boxes) > 0
+    detected = len(smoke_results[0].boxes) > 0
+    
+    if detected:
+        smoking_detection_count += 1
+    else:
+        smoking_detection_count = 0  # Reset count if no detection
+    
+    if smoking_detection_count >= 3:
+        smoking_alert_active = True
+        smoking_alert_start_time = time.time()
+        smoking_detection_count = 0  # Reset count
+    
+    if smoking_alert_active and time.time() - smoking_alert_start_time >= 5:
+        smoking_alert_active = False  # Reset alert state
+    
+    return smoking_alert_active
+
+def detect_mobile(frame):
+    global mobile_alert_active, mobile_detection_count, mobile_alert_start_time
+    if not detection_active:
+        return False, []
+    img_path = "temp_frame.jpg"
+    cv2.imwrite(img_path, frame)
+    result = CLIENT.infer(img_path, model_id="mobile-q1qgj/1")
+    predictions = result.get("predictions", [])
+    high_confidence_detections = [pred for pred in predictions if pred["confidence"] > 0.7]
+    
+    if len(high_confidence_detections) > 0:
+        mobile_detection_count += 1
+    else:
+        mobile_detection_count = 0  # Reset count if no detection
+    
+    if mobile_detection_count >= 3:
+        mobile_alert_active = True
+        mobile_alert_start_time = time.time()
+        mobile_detection_count = 0  # Reset count
+    
+    if mobile_alert_active and time.time() - mobile_alert_start_time >= 5:
+        mobile_alert_active = False  # Reset alert state
+    
+    return mobile_alert_active, high_confidence_detections
+
+def detect_aisle(frame):
+    if not detection_aisle:
+        return frame
+
+    # Perform inference
+    try:
+        results = model_aisle(frame)
+        boxes = results[0].boxes.xyxy.cpu().numpy()
+        print(f"Detected boxes: {boxes}")  # Debugging
+
+        # Draw virtual fence
+        cv2.polylines(frame, [fence_points], isClosed=True, color=(255, 0, 0), thickness=3)
+
+        for box in boxes:
+            x1, y1, x2, y2 = map(int, box[:4])
+            feet_x = (x1 + x2) // 2
+            feet_y = y2
+            feet_point = Point(feet_x, feet_y)
+
+            # Check if feet point is within the virtual fence
+            if feet_point.within(fence_polygon):
+                cv2.putText(frame, "ALERT!", (feet_x, feet_y - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv2.circle(frame, (feet_x, feet_y), 5, (0, 0, 255), -1)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            else:
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    except Exception as e:
+        print(f"Error during aisle detection: {e}")
+
+    return frame
+
 
 def gen_frames():
+    global frame_count
     cap = cv2.VideoCapture(0)
-    time.sleep(1)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    # time.sleep(1)
     
     while True:
         success, frame = cap.read()
         if not success:
             break
         
-        smoking, yawning = False, False
-        if detection_active:
+        yawning = detect_yawning(frame)
+        frame=detect_aisle(frame)
+        if(frame_count % frame_skip == 0):
             smoking = detect_smoking(frame)
-            yawning = detect_yawning(frame)
+            mobile_detected, bounding_boxes = detect_mobile(frame)
+            for pred in bounding_boxes:
+                x, y, w, h = int(pred["x"] - pred["width"] / 2), int(pred["y"] - pred["height"] / 2), int(pred["width"]), int(pred["height"])
+                label = pred["class"]
+                confidence = pred["confidence"]
+                # Draw bounding box
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(frame, f"{label} ({confidence:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         
-        if smoking:
+        if smoking_alert_active:
             cv2.putText(frame, "Smoking Detected!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
         if yawning:
             cv2.putText(frame, "Yawning Detected!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
+        if mobile_alert_active:
+            cv2.putText(frame, "ALERT: Mobile phone detected!", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 3)
         
         _, buffer = cv2.imencode('.jpg', frame)
         frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        frame_count += 1
     
     cap.release()
 
@@ -101,19 +208,15 @@ def stop_driver_monitoring():
 
 @app.route('/start_aisle_detection', methods=['POST'])
 def start_aisle_detection():
-    global detection_aisle_active
-    detection_aisle_active = True
+    global detection_aisle
+    detection_aisle = True
     return jsonify({"status": "Aisle detection started"})
 
 @app.route('/stop_aisle_detection', methods=['POST'])
 def stop_aisle_detection():
-    global detection_aisle_active
-    detection_aisle_active = False
+    global detection_aisle
+    detection_aisle = False
     return jsonify({"status": "Aisle detection stopped"})
-
-@app.route('/static/')
-def send_static(path):
-    return send_from_directory('static', path)
 
 if __name__ == '__main__':
     app.run(debug=True)

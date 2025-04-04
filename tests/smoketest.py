@@ -10,7 +10,7 @@ class TestSmokingDetection(unittest.TestCase):
         # Load models
         model_path = hf_hub_download(repo_id="arnabdhar/YOLOv8-Face-Detection", filename="model.pt")
         cls.model_face = YOLO(model_path)
-        cls.model_smoke = YOLO(r'../training/Datasets/dataset_smoke/runs/detect/train/weights/best.pt')
+        cls.model_smoke = YOLO(r'../weights/smoke/best.pt')
 
     def detect_smoking(self, image_path):
         frame = cv2.imread(image_path)
