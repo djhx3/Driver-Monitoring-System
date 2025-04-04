@@ -9,14 +9,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: joshuaavalon/dlib:python3.9
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Install Dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install System Dependencies for dlib
         run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake \
+            libopenblas-dev liblapack-dev libx11-dev \
+            libgtk-3-dev libboost-all-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Lint with flake8
