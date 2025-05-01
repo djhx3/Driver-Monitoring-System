@@ -1,76 +1,60 @@
 # Driver Monitoring System
 
-## Overview
-The **Driver Monitoring System** is an AI-powered surveillance system designed to enhance road safety by detecting driver behaviors and passenger activities in public transport vehicles. This system currently focuses on identifying:
-- **Smoking Detection**: Determines if the driver is smoking.
-- **Aisle Monitoring**: Detects if passengers are standing in the aisle.
-- **Yawning Detection**: Identifies if the driver is yawning, which may indicate fatigue.
-- **Mobile Usage Detection**: Detects if the driver is holding or using a mobile phone.
-
-This is the initial version of the system, and future iterations may include additional features.
+## Objective
+This system is designed to enhance road safety by monitoring driver behavior and passenger actions in real-time. The system detects **driver distractions** (e.g., mobile phone usage) and **unsafe passenger behavior** (e.g., passengers standing in the aisle when the bus is in motion).
 
 ## Features
-- Real-time monitoring using trained AI models
-- Detection using advanced deep learning models
-- Custom training on specialized datasets for high accuracy
-- Modular and scalable architecture for easy feature additions
+- **Driver Distraction Detection**: Detects whether the driver is using a mobile phone using a pre-trained model from **Roboflow**.
+- **Smoking Detection**: Uses a custom-trained CNN model to detect smoking behavior in the driver's cabin.
+- **Yawning Detection**: Monitors the driver’s facial expressions to detect yawning, which can indicate fatigue.
+- **Aisle Standing Detection**: Detects if passengers are standing in the aisle of the bus when the vehicle is in motion, promoting safety and compliance.
 
-## Tech Stack
-The system is built using various deep learning and computer vision frameworks, including:
-
-### **Model Training**
-- **YOLO** (You Only Look Once) - for object detection
-- **Ultralytics** - implementation of YOLO models
-- **Torch** - deep learning framework for training models
-- **Roboflow** - for dataset preprocessing and augmentation
-
-### **Processing & Inference**
-- **OpenCV** - for image and video processing
-- **Supervision** - for managing inference workflows
-- **Hugging Face** - for leveraging pre-trained models and model deployment
-
-### **Standard Libraries**
-- **NumPy** - for numerical computations
-- **Matplotlib** - for data visualization
-- **PIL** (Pillow) - for image processing
-- **Time** - for time-based operations
-- **Etc.** - for other standard libraries and utilities
+## Tools & Technologies
+- **Programming Languages**: Python, C++
+- **Libraries & Frameworks**:
+  - **OpenCV**: For image processing and real-time video feed analysis.
+  - **TensorFlow/PyTorch**: For training custom deep learning models.
+  - **Flask**: For deploying the system as a web application for real-time inference.
+  - **Roboflow**: For the mobile phone detection model.
+  - **GitHub**: For version control and project management.
 
 ## Installation
-To set up the Driver Monitoring System, follow these steps:
-
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/driver-monitoring-system.git
-   cd driver-monitoring-system
+   git clone https://github.com/djhx3/Driver-Monitoring-System.git
    ```
 
-2. Install dependencies:
+2. Install the required dependencies:
    ```bash
-   pip install ultralytics opencv-python roboflow torch torchvision numpy matplotlib pillow supervision transformers
+   pip install -r requirements.txt
    ```
 
-3. Download the pre-trained model and place it in the designated directory.
-
-4. Run inference on test data:
-   ```python
-   from ultralytics import YOLO
-   model = YOLO("trained_model.pt")  # Load pre-trained model
-   results = model.predict(source="test_video.mp4", save=True)
+3. Run the system:
+   ```bash
+   python web1.py
    ```
 
-## Future Enhancements
-- **Drowsiness Detection**: Combining yawning with eye-tracking for fatigue detection.
-- **Gesture Recognition**: Detecting distracted driving behaviors beyond mobile usage.
-- **Emergency Alert System**: Notifying authorities in case of critical detections.
+## Usage
+Once the system is running, it will use your camera to detect driver behavior and passenger safety. The results for **smoking**, **yawning**, **mobile phone usage**, and **aisle standing** will be displayed in real-time.
 
-## Contribution
-Feel free to contribute to the project by:
-- Improving detection accuracy
-- Adding new features
-- Enhancing model efficiency
+## How it Works
+- **Face Detection**: The system first detects the driver’s face using OpenCV.
+- **Behavior Detection**: Depending on the detected face, the system applies pre-trained or custom models to identify behaviors (e.g., smoking, yawning).
+- **Mobile Phone Detection**: A Roboflow model detects whether the driver is using a mobile phone.
+- **Aisle Detection**: The system checks the bus interior and identifies whether passengers are standing in the aisle during startup.
 
-## License
-This project is licensed under the MIT License.
+## Contributions
+- Custom-trained CNN for **smoking** and **aisle detection**.
+- Integrated **Roboflow’s mobile phone detection model** for real-time inference.
+- Deployed the system using **Flask** to make it accessible through a web interface.
+  
+## Future Improvements
+- Implement more driver behavior monitoring features.
+- Improve model accuracy and optimize real-time inference.
+- Extend the system to monitor additional distractions (e.g., talking, eating).
 
+---
 
+### Customizing for Your Project:
+- **Dependencies**: Ensure that your `requirements.txt` file includes all necessary dependencies like **TensorFlow**, **PyTorch**, **OpenCV**, **Flask**, etc.
+- **Model Training**: Update the section on **training** if you want to provide more details on how the **smoking** model was trained or how you handled the **aisle detection**.
